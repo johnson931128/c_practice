@@ -16,36 +16,32 @@ int main(int argc, char *argv[])
     fscanf(input, "%d", &arr_size);
     int arr[arr_size];
 
-    // Read integers from input file into the array
     for (int i = 0; i < arr_size; i++) {
-        int data;
-        fscanf(input, "%d", &data);
-        arr[i] = data;
+        fscanf(input, "%d", &arr[i]);
     }
     fclose(input);
 
     int *p_a = &arr[0];
 
-    // array a bubble sort
-    /* Original C code segment
-    for (int i = 0; i < arr_size - 1; i++) {
-        for (int j = 0; j < arr_size - i -1; j++) {
-            if (*(p_a + j) > *(p_a + j + 1)) {
-                int tmp = *(p_a + j);
-                *(p_a + j) = *(p_a + j + 1);
-                *(p_a + j + 1) = tmp;
-            }
-        }
-    }
-    */
-
     for (int i = 0; i < arr_size - 1; i++) {
         for (int j = 0; j < arr_size - i - 1; j++) {
+            int *addr = p_a + j;
             asm volatile(
-                // Your code
-                "");
+                "lw t0, 0(%[addr])\n"
+                "lw t1, 4(%[addr])\n"
+                "blt t1, t0, swap%=\n"
+                "j continue%=\n"
+                "swap%=:\n"
+                "sw t1, 0(%[addr])\n"
+                "sw t0, 4(%[addr])\n"
+                "continue%=:\n"
+                :
+                : [addr] "r" (addr)
+                : "t0", "t1", "memory"
+            );
         }
     }
+
     p_a = &arr[0];
     for (int i = 0; i < arr_size; i++)
         printf("%d ", *p_a++);
