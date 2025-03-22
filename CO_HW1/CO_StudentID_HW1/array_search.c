@@ -5,8 +5,32 @@ int arraySearch(int *p_a, int arr_size, int target)
     int result = -1;
 
     asm volatile(
-        // Your code
-        "");
+	"li t0, 0\n"
+	"mv t4, %[arr_size]\n"
+	"find_target_loop%=:\n"
+	"bge t0, t4, no_found%=\n"
+	"slli t1, t0, 2\n"
+	"add t2, %[arr], t1\n"
+	"lw t3, 0(t2)\n"
+	"beq t3, %[target], found%=\n"
+	"addi t0, t0, 1\n"
+	"j find_target_loop%=\n"
+
+	// if found
+	"found%=:\n"
+	"mv %[result], t0\n"
+	"j end%=\n"
+
+	// no found
+	"no_found%=:\n"
+	"li %[result], -1\n"
+
+	// data&end
+	"end%=:\n"
+	: [result] "=r" (result)
+	: [arr] "r" (p_a), [arr_size] "r" (arr_size), [target] "r" (target)
+	: "t0", "t1", "t2", "t3","t4",  "memory"
+    );
 
     return result;
 }
