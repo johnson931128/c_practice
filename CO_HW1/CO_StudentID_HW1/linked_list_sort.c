@@ -28,7 +28,7 @@ void splitList(Node *head, Node **firstHalf, Node **secondHalf)
 	"finish%=:\n"
 	"lw t2, 4(t0)\n"
 	"sw zero, 4(t0)\n"
-	"mv %[firstHalf], %[he	ad]\n"
+	"mv %[firstHalf], %[head]\n"
 	"mv %[secondHalf], t2\n"
 	:
 	: [head] "r" (head), [firstHalf] "r" (*firstHalf), [secondHalf] "r" (*secondHalf)
@@ -102,7 +102,8 @@ Node *mergeSortedLists(Node *a, Node *b)
 
 	"end%=:\n"
 	: [result] "+r" (result), [tail] "+r" (tail), [a] "+r" (a), [b] "+r" (b)
-	: "t0", "t1", "memory" 
+	:
+	: "t0", "t1", "memory"
 	);
 
     return result;
@@ -159,9 +160,27 @@ int main(int argc, char *argv[])
             Block C (Move to the next node), which updates the pointer to
             traverse the linked list
             */
-            "");
+	/*
+	            Equivalent C: cur = cur->next;
+            Assumes 'cur' holds the pointer to the current Node.
+            Assumes 'next' is at offset 4 bytes from the start of the Node.
+
+	*/
+        "lw %[cur_ptr], 4(%[cur_ptr])\n"
+	: [cur_ptr] "+r" (cur)
+	:
+	: "memory"
+	);
     }
     printf("\n");
+
+
+    cur = head;
+    while(cur != NULL){
+	Node *temp = cur;
+	cur = cur -> next;
+	free(temp);
+    }
     return 0;
 }
 
