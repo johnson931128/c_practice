@@ -13,7 +13,27 @@ void splitList(Node *head, Node **firstHalf, Node **secondHalf)
         /*
         Block A (splitList), which splits the linked list into two halves
         */
-        "");
+	"mv t0, %[head]\n"
+	"mv t1, %[head]\n"
+
+	"splitLoop%=:\n"
+	"beq t1, zero, finish%=\n"
+	"lw t1, 4(t1)\n"
+	"beq t1, zero, finish%=\n"
+	"lw t1, 4(t1)\n"
+
+	"lw t0, 4(t0)"
+	"j splitLoop%=\n"
+
+	"finish%=:\n"
+	"lw t2, 4(t0)\n"
+	"sw zero, 4(t0)\n"
+	"mv %[firstHalf], %[he	ad]\n"
+	"mv %[secondHalf], t2\n"
+	:
+	: [head] "r" (head), [firstHalf] "r" (*firstHalf), [secondHalf] "r" (*secondHalf)
+	: "t0", "t1", "t2", "memory"
+	);
 }
 
 // Merge two sorted linked lists
@@ -26,7 +46,64 @@ Node *mergeSortedLists(Node *a, Node *b)
         /*
         Block B (mergeSortedList), which merges two sorted lists into one
         */
-        "");
+	// end logic
+        "merge_loop%=:\n"
+	"beq %[a], zero, merge_done%=\n"
+	"beq %[b], zero, merge_done%=\n"
+	// initialize a and b to t0 and t1
+	"lw t0, 0(%[a])\n"
+	"lw t1, 0(%[b])\n"
+	// if t1<t0 go to choose b else a
+	"blt t1, t0, choose_b%=\n"
+	"j choose_a%=\n"
+	// choose who will be first
+	"choose_a%=:\n"
+	"beq %[result], zero, first_a%=\n"
+	"sw %[a], 4(%[tail])\n"
+	"j update_tail_a%=\n"
+
+	"choose_b%=:\n"
+	"beq %[result], zero, first_b%=\n"
+	"sw %[b], 4(%[tail]\n"
+	"j update_tail_b%=\n"
+
+	// let a or b be the head
+	// let result = a, taile = a
+	"first_a%=:\n"
+	"mv %[result], %[a]\n"
+	"mv %[tail], %[a]\n"
+	"j merge_loop%=\n"
+	// choose b
+	"first_b%=:\n"
+	"mv %[result], %[b]\n"
+	"mv %[tail], %[b]\n"
+	"j update_tail_b%=\n"
+
+	// update tail and let t0 = a->next & t1 = b->next
+	"update_tail_a%=:\n"
+	"lw %[a], 4(%[a]\n"
+	"j merge_loop%=\n"
+
+	"update_tail_b%=:\n"
+	"lw %[b] 4(%[b]\n"
+	"j merge_loop%=\n"
+
+	// if finsish (end)
+	// split to cheak a or b who finish
+	"merge_done%=:\n"
+	"beq %[a], zero, check_b%=\n"
+	"sw %[a], 4(%[tail])\n"
+	"j end%=\n"
+
+	"cheack_b%=:\n"
+	// if b -> next = null both end
+	"beq %[b], zero, end%=\n"
+	"sw %[b], 4(%[tail])\n"
+
+	"end%=:\n"
+	: [result] "+r" (result), [tail] "+r" (tail), [a] "+r" (a), [b] "+r" (b)
+	: "t0", "t1", "memory" 
+	);
 
     return result;
 }
@@ -87,3 +164,4 @@ int main(int argc, char *argv[])
     printf("\n");
     return 0;
 }
+
