@@ -14,24 +14,24 @@ void splitList(Node *head, Node **firstHalf, Node **secondHalf)
         Block A (splitList), which splits the linked list into two halves
         */
 	"mv t0, %[head]\n"
-	"mv t1, %[head]\n"
+	"mv t1, 4(%[head])\n"
 
 	"splitLoop%=:\n"
-	"beq t1, zero, finish%=\n"
 	"lw t1, 4(t1)\n"
 	"beq t1, zero, finish%=\n"
 	"lw t1, 4(t1)\n"
 
-	"lw t0, 4(t0)"
-	"j splitLoop%=\n"
+	"lw t0, 4(t0)\n"
+	"bne t1, zero, splitLoop%=\n"
 
 	"finish%=:\n"
 	"lw t2, 4(t0)\n"
 	"sw zero, 4(t0)\n"
-	"mv %[firstHalf], %[head]\n"
-	"mv %[secondHalf], t2\n"
+
+	"sw %[head], 0(%[fh_ptr_addr])\n"
+	"sw t2, 0(%[sh_ptr_addr])\n"
 	:
-	: [head] "r" (head), [firstHalf] "r" (*firstHalf), [secondHalf] "r" (*secondHalf)
+	: [head] "r" (head), [fh_ptr_addr] "r" (firstHalf), [sh_ptr_addr] "r" (secondHalf)
 	: "t0", "t1", "t2", "memory"
 	);
 }
@@ -47,61 +47,66 @@ Node *mergeSortedLists(Node *a, Node *b)
         Block B (mergeSortedList), which merges two sorted lists into one
         */
 	// end logic
-        "merge_loop%=:\n"
-	"beq %[a], zero, merge_done%=\n"
-	"beq %[b], zero, merge_done%=\n"
+	"beq %[a], zero, check_b_null%=\n"
+	"beq %[b], zero, a_is_result%=\n"
+	"j determine_first_node%=\n"
+
+	"check_b_null%=:\n"
+	"mv %[result], %[b]\n"
+	"j end%=\n"
+
+	"a_is_result%=:\n"
+	"mv %[result], %[a]\n"
+	"j end%=\n"
+
+	"determine_first_node%=:\n"
+	"lw t0, 0(%[a])\n"
+	"lw t1, 0(%[b])\n"
+	"ble t0, t1, first_is_a%=\n"
+
+	"first_is_b%=:\n"
+	"mv %[result], %[b]\n"
+	"mv %[tail], %[b]\n"
+	"lw %[b], 4(%[b])\n"
+	"j merge_loop_start%=\n"
+
+	"first_is_a%=:\n"
+	"mv %[result], %[a]\n"
+	"mv %[tail], %[a]\n"
+	"lw %[a], 4(%[a])\n"
+
+	"merge_loop_start%=:\n"
+	"beq %[a], zero, append_b_%= \n"
+	"beq %[b], zero, append_a_%= \n"
 	// initialize a and b to t0 and t1
 	"lw t0, 0(%[a])\n"
 	"lw t1, 0(%[b])\n"
 	// if t1<t0 go to choose b else a
-	"blt t1, t0, choose_b%=\n"
-	"j choose_a%=\n"
+	"blt t1, t0, choose_a_loop%=\n"
 	// choose who will be first
-	"choose_a%=:\n"
-	"beq %[result], zero, first_a%=\n"
+	"choose_b_loop%=:\n"
+	"sw %[b], 4(%[tail])\n"
+	"mv %[tail], %[b]\n"
+	"lw %[b], 4(%[b])\n"
+	"j merge_loop_start%=\n"
+
+	"choose_a_loop%=:\n"
 	"sw %[a], 4(%[tail])\n"
-	"j update_tail_a%=\n"
+	"mv %[tail], %[a]\n"
+	"lw %[a], 4(%[a])\n"
+	"j merge_loop_start%=\n"
 
-	"choose_b%=:\n"
-	"beq %[result], zero, first_b%=\n"
-	"sw %[b], 4(%[tail]\n"
-	"j update_tail_b%=\n"
-
+	"append_b_%=:\n"
+	"sw %[b], 4(%[tail])\n"
+	"j end%=\n"
 	// let a or b be the head
 	// let result = a, taile = a
-	"first_a%=:\n"
-	"mv %[result], %[a]\n"
-	"mv %[tail], %[a]\n"
-	"j merge_loop%=\n"
-	// choose b
-	"first_b%=:\n"
-	"mv %[result], %[b]\n"
-	"mv %[tail], %[b]\n"
-	"j update_tail_b%=\n"
-
-	// update tail and let t0 = a->next & t1 = b->next
-	"update_tail_a%=:\n"
-	"lw %[a], 4(%[a]\n"
-	"j merge_loop%=\n"
-
-	"update_tail_b%=:\n"
-	"lw %[b] 4(%[b]\n"
-	"j merge_loop%=\n"
-
-	// if finsish (end)
-	// split to cheak a or b who finish
-	"merge_done%=:\n"
-	"beq %[a], zero, check_b%=\n"
+	"append_a_%=:\n"
 	"sw %[a], 4(%[tail])\n"
 	"j end%=\n"
 
-	"cheack_b%=:\n"
-	// if b -> next = null both end
-	"beq %[b], zero, end%=\n"
-	"sw %[b], 4(%[tail])\n"
-
 	"end%=:\n"
-	: [result] "+r" (result), [tail] "+r" (tail), [a] "+r" (a), [b] "+r" (b)
+	:[result] "+r" (result), [tail] "+r" (tail), [a] "+r" (a), [b] "+r" (b)
 	:
 	: "t0", "t1", "memory"
 	);
