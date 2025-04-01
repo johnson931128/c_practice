@@ -14,7 +14,7 @@ void splitList(Node *head, Node **firstHalf, Node **secondHalf)
         Block A (splitList), which splits the linked list into two halves
         */
 	"mv t0, %[head]\n"
-	"mv t1, 4(%[head])\n"
+	"lw t1, 4(%[head])\n"
 
 	"splitLoop%=:\n"
 	"lw t1, 4(t1)\n"
@@ -28,8 +28,8 @@ void splitList(Node *head, Node **firstHalf, Node **secondHalf)
 	"lw t2, 4(t0)\n"
 	"sw zero, 4(t0)\n"
 
-	"sw %[head], 0(%[fh_ptr_addr])\n"
-	"sw t2, 0(%[sh_ptr_addr])\n"
+	"sd %[head], 0(%[fh_ptr_addr])\n"
+	"sd t2, 0(%[sh_ptr_addr])\n"
 	:
 	: [head] "r" (head), [fh_ptr_addr] "r" (firstHalf), [sh_ptr_addr] "r" (secondHalf)
 	: "t0", "t1", "t2", "memory"
