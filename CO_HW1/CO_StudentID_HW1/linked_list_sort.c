@@ -5,7 +5,7 @@ typedef struct Node {
     int data;
     struct Node *next;
 } Node;
-
+// pointer in C is 8 bytes
 // Split the linked list into two parts
 void splitList(Node *head, Node **firstHalf, Node **secondHalf)
 {
@@ -13,27 +13,38 @@ void splitList(Node *head, Node **firstHalf, Node **secondHalf)
         /*
         Block A (splitList), which splits the linked list into two halves
         */
-	"mv t0, %[head]\n"
-	"lw t1, 4(%[head])\n"
+        "beqz %[head], end_split%=\n"          // If head is NULL, exit
+        
+        "mv t0, %[head]\n"                     // slow = head
+        "mv t1, %[head]\n"                     // fast = head
+        "mv t2, zero\n"                        // prev = NULL
+        
+        "find_middle%=:\n"
+        "ld t3, 8(t1)\n"                       // t3 = fast->next
+        "beqz t3, break_middle%=\n"            // if fast->next == NULL, break
+        "ld t4, 8(t3)\n"                       // t4 = fast->next->next
+        "beqz t4, break_middle%=\n"            // if fast->next->next == NULL, break
+        
+        "mv t2, t0\n"                          // prev = slow
+        "ld t0, 8(t0)\n"                       // slow = slow->next
+        "mv t1, t4\n"                          // fast = fast->next->next
+        "j find_middle%=\n"
+        
+        "break_middle%=:\n"
+        "beqz t0, end_split%=\n"               // If slow is NULL, exit
+        "ld t3, 8(t0)\n"                       // t3 = slow->next
+        
+        "sd %[head], 0(%[fh_ptr_addr])\n"      // *firstHalf = head
+        "sd t3, 0(%[sh_ptr_addr])\n"           // *secondHalf = slow->next
 
-	"splitLoop%=:\n"
-	"lw t1, 4(t1)\n"
-	"beq t1, zero, finish%=\n"
-	"lw t1, 4(t1)\n"
-
-	"lw t0, 4(t0)\n"
-	"bne t1, zero, splitLoop%=\n"
-
-	"finish%=:\n"
-	"lw t2, 4(t0)\n"
-	"sw zero, 4(t0)\n"
-
-	"sd %[head], 0(%[fh_ptr_addr])\n"
-	"sd t2, 0(%[sh_ptr_addr])\n"
-	:
-	: [head] "r" (head), [fh_ptr_addr] "r" (firstHalf), [sh_ptr_addr] "r" (secondHalf)
-	: "t0", "t1", "t2", "memory"
-	);
+        "li t4, 0\n"                           // t4 = NULL
+        "sd t4, 8(t0)\n"                       // slow->next = NULL
+        "j end_split%=\n"
+        "end_split%=:\n"
+        :
+        : [head] "r" (head), [fh_ptr_addr] "r" (firstHalf), [sh_ptr_addr] "r" (secondHalf)
+        : "t0", "t1", "t2", "t3", "t4", "memory"
+    );
 }
 
 // Merge two sorted linked lists
@@ -46,70 +57,68 @@ Node *mergeSortedLists(Node *a, Node *b)
         /*
         Block B (mergeSortedList), which merges two sorted lists into one
         */
-	// end logic
-	"beq %[a], zero, check_b_null%=\n"
-	"beq %[b], zero, a_is_result%=\n"
-	"j determine_first_node%=\n"
-
-	"check_b_null%=:\n"
-	"mv %[result], %[b]\n"
-	"j end%=\n"
-
-	"a_is_result%=:\n"
-	"mv %[result], %[a]\n"
-	"j end%=\n"
-
-	"determine_first_node%=:\n"
-	"lw t0, 0(%[a])\n"
-	"lw t1, 0(%[b])\n"
-	"ble t0, t1, first_is_a%=\n"
-
-	"first_is_b%=:\n"
-	"mv %[result], %[b]\n"
-	"mv %[tail], %[b]\n"
-	"lw %[b], 4(%[b])\n"
-	"j merge_loop_start%=\n"
-
-	"first_is_a%=:\n"
-	"mv %[result], %[a]\n"
-	"mv %[tail], %[a]\n"
-	"lw %[a], 4(%[a])\n"
-
-	"merge_loop_start%=:\n"
-	"beq %[a], zero, append_b_%= \n"
-	"beq %[b], zero, append_a_%= \n"
-	// initialize a and b to t0 and t1
-	"lw t0, 0(%[a])\n"
-	"lw t1, 0(%[b])\n"
-	// if t1<t0 go to choose b else a
-	"blt t1, t0, choose_a_loop%=\n"
-	// choose who will be first
-	"choose_b_loop%=:\n"
-	"sw %[b], 4(%[tail])\n"
-	"mv %[tail], %[b]\n"
-	"lw %[b], 4(%[b])\n"
-	"j merge_loop_start%=\n"
-
-	"choose_a_loop%=:\n"
-	"sw %[a], 4(%[tail])\n"
-	"mv %[tail], %[a]\n"
-	"lw %[a], 4(%[a])\n"
-	"j merge_loop_start%=\n"
-
-	"append_b_%=:\n"
-	"sw %[b], 4(%[tail])\n"
-	"j end%=\n"
-	// let a or b be the head
-	// let result = a, taile = a
-	"append_a_%=:\n"
-	"sw %[a], 4(%[tail])\n"
-	"j end%=\n"
-
-	"end%=:\n"
-	:[result] "+r" (result), [tail] "+r" (tail), [a] "+r" (a), [b] "+r" (b)
-	:
-	: "t0", "t1", "memory"
-	);
+        // Check if either list is NULL
+        "beqz %[a], a_is_null%=\n"
+        "beqz %[b], b_is_null%=\n"
+        
+        // Compare first nodes
+        "lw t0, 0(%[a])\n"                     // t0 = a->data
+        "lw t1, 0(%[b])\n"                     // t1 = b->data
+        "ble t0, t1, choose_a_first%=\n"       // if a->data <= b->data, choose a
+        "j choose_b_first%=\n"
+        
+        "a_is_null%=:\n"
+        "mv %[result], %[b]\n"                 // result = b
+        "j end_merge%=\n"
+        
+        "b_is_null%=:\n"
+        "mv %[result], %[a]\n"                 // result = a
+        "j end_merge%=\n"
+        
+        "choose_a_first%=:\n"
+        "mv %[result], %[a]\n"                 // result = a
+        "mv %[tail], %[a]\n"                   // tail = a
+        "ld %[a], 8(%[a])\n"                   // a = a->next
+        "j merge_loop%=\n"
+        
+        "choose_b_first%=:\n"
+        "mv %[result], %[b]\n"                 // result = b
+        "mv %[tail], %[b]\n"                   // tail = b
+        "ld %[b], 8(%[b])\n"                   // b = b->next
+        "j merge_loop%=\n"
+        
+        "merge_loop%=:\n"
+        "beqz %[a], attach_b%=\n"              // if a is NULL, attach b
+        "beqz %[b], attach_a%=\n"              // if b is NULL, attach a
+        
+        "lw t0, 0(%[a])\n"                     // t0 = a->data
+        "lw t1, 0(%[b])\n"                     // t1 = b->data
+        "ble t0, t1, attach_next_a%=\n"        // if a->data <= b->data, attach a
+        
+        "sd %[b], 8(%[tail])\n"                // tail->next = b
+        "mv %[tail], %[b]\n"                   // tail = b
+        "ld %[b], 8(%[b])\n"                   // b = b->next
+        "j merge_loop%=\n"
+        
+        "attach_next_a%=:\n"
+        "sd %[a], 8(%[tail])\n"                // tail->next = a
+        "mv %[tail], %[a]\n"                   // tail = a
+        "ld %[a], 8(%[a])\n"                   // a = a->next
+        "j merge_loop%=\n"
+        
+        "attach_a%=:\n"
+        "sd %[a], 8(%[tail])\n"                // tail->next = a
+        "j end_merge%=\n"
+        
+        "attach_b%=:\n"
+        "sd %[b], 8(%[tail])\n"                // tail->next = b
+        "j end_merge%=\n"
+        
+        "end_merge%=:\n"
+        : [result] "+r" (result), [tail] "+r" (tail), [a] "+r" (a), [b] "+r" (b)
+        : 
+        : "t0", "t1", "memory"
+    );
 
     return result;
 }
@@ -144,20 +153,45 @@ int main(int argc, char *argv[])
     }
     int list_size;
     fscanf(input, "%d", &list_size);
-    Node *head = (list_size > 0) ? (Node *)malloc(sizeof(Node)) : NULL;
-    Node *cur = head;
+    Node *head = NULL;
+    Node *tail = NULL;
+    
     for (int i = 0; i < list_size; i++) {
-        fscanf(input, "%d", &(cur->data));
-        if (i + 1 < list_size)
-            cur->next = (Node *)malloc(sizeof(Node));
-        cur = cur->next;
+        Node *new_node = (Node *)malloc(sizeof(Node));
+        if (!new_node) {
+            fprintf(stderr, "Memory allocation failed\n");
+            return 1;
+        }
+        
+        fscanf(input, "%d", &(new_node->data));
+        new_node->next = NULL;
+        
+        if (!head) {
+            head = new_node;
+            tail = new_node;
+        } else {
+            tail->next = new_node;
+            tail = new_node;
+        }
     }
     fclose(input);
+
+    // Print original list for debugging
+    /*
+    printf("Original list: ");
+    Node *debug = head;
+    while (debug) {
+        printf("%d ", debug->data);
+        debug = debug->next;
+    }
+    printf("\n");
+    */
 
     // Linked list sort
     head = mergeSort(head);
 
-    cur = head;
+    // Print sorted list
+    Node *cur = head;
     while (cur) {
         printf("%d ", cur->data);
         asm volatile(
@@ -165,27 +199,21 @@ int main(int argc, char *argv[])
             Block C (Move to the next node), which updates the pointer to
             traverse the linked list
             */
-	/*
-	            Equivalent C: cur = cur->next;
-            Assumes 'cur' holds the pointer to the current Node.
-            Assumes 'next' is at offset 4 bytes from the start of the Node.
-
-	*/
-        "lw %[cur_ptr], 4(%[cur_ptr])\n"
-	: [cur_ptr] "+r" (cur)
-	:
-	: "memory"
-	);
+            "ld %[cur_ptr], 8(%[cur_ptr])\n"
+            : [cur_ptr] "+r" (cur)
+            :
+            : "memory"
+        );
     }
     printf("\n");
 
-
+    // Free memory
     cur = head;
-    while(cur != NULL){
-	Node *temp = cur;
-	cur = cur -> next;
-	free(temp);
+    while (cur) {
+        Node *temp = cur;
+        cur = cur->next;
+        free(temp);
     }
+    
     return 0;
 }
-
