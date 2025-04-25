@@ -9,8 +9,6 @@
                       		(long long)fsub_cnt * fsub_CPI + \
                       		(long long)fmul_cnt * fmul_CPI + \
                       		(long long)fdiv_cnt * fdiv_CPI + \
-                      		(long long)flw_cnt * flw_CPI + \
-                      		(long long)fsw_cnt * fsw_CPI + \
                       		(long long)others_cnt * others_CPI )
 
 #define macro_fft_cpu_time \
@@ -21,8 +19,6 @@
 			( (double)fft_cycle_count - \
 				( (long long)lw_cnt * lw_CPI + \
 				(long long)sw_cnt * sw_CPI + \
-				(long long)flw_cnt * flw_CPI + \
-				(long long)fsw_cnt * fsw_CPI) \
 				/ fft_cycle_count) \
 				:0.0)
 
