@@ -6,7 +6,7 @@
 #endif
 int arr_size = ARR_SIZE;
 int count = 0;
-static float student_id = 94126054.0;//student_id = your_studnet_id % 100
+static float student_id = 54.0;//student_id = your_studnet_id % 100
 static float *h;
 static float *x;
 static float *y;
