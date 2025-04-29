@@ -37,7 +37,7 @@ void arraymul_baseline(){
     for (int i = 0; i < arr_size; i++){
         printf(" %.6f ", y[i]);
     }
-       
+ 
     printf("\n\n");
 
     printf("add counter used: %d\n", add_cnt);
@@ -104,7 +104,7 @@ void input(){
 
 	int fd;
 	char *buf = (char *)calloc(3000, sizeof(char));
-	
+
 	fd = open("./arraymul_input.txt", O_RDONLY);
 	if(fd < 0)
 		exit(EXIT_FAILURE);
