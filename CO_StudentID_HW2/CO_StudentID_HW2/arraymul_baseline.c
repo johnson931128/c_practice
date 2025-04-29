@@ -28,5 +28,5 @@
 "addi %[arr_size], %[arr_size], -1\n\t"
 
 "addi %[others_cnt], %[others_cnt], 1\n\t"
-"bnez %[arr_size], loop\n\t"
+"bne %[arr_size], x0, loop"
 
