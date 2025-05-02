@@ -17,13 +17,14 @@
 *   輸入處理 (`<limits>`)
 
 ## 檔案結構 (File Structure)
+```
 login_system/
 ├── main.cpp
 ├── auth.h
 ├── auth.cpp
 ├── data_handler.h
 └── data_handler.cpp
-
+```
 
 ## 如何建置 (How to Build)
 
@@ -32,6 +33,3 @@ login_system/
 ```bash
 g++ main.cpp auth.cpp data_handler.cpp -o login_system -std=c++20
 ./login_system
-
-
-
