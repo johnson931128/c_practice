@@ -1,7 +1,7 @@
 {
 	"InstallScripts" : 
 	[
-		"C:/cpp_programing/MyOpenGLProject/build/cmake_install.cmake"
+		"C:/cpp_programing/for git/MyOpenGLProject/build/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

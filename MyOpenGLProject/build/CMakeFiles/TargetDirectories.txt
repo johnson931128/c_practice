@@ -1,4 +1,4 @@
-C:/cpp_programing/MyOpenGLProject/build/CMakeFiles/glad.dir
-C:/cpp_programing/MyOpenGLProject/build/CMakeFiles/main.dir
-C:/cpp_programing/MyOpenGLProject/build/CMakeFiles/edit_cache.dir
-C:/cpp_programing/MyOpenGLProject/build/CMakeFiles/rebuild_cache.dir
+C:/cpp_programing/for git/MyOpenGLProject/build/CMakeFiles/glad.dir
+C:/cpp_programing/for git/MyOpenGLProject/build/CMakeFiles/main.dir
+C:/cpp_programing/for git/MyOpenGLProject/build/CMakeFiles/ALL_BUILD.dir
+C:/cpp_programing/for git/MyOpenGLProject/build/CMakeFiles/ZERO_CHECK.dir
