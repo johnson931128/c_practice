@@ -1,0 +1,17 @@
+Before submitting this file, make sure that there are no more TODO
+placeholders remaining in the file (and remove this comment too).
+
+Marriage Pact
+-------------
+
+Q1. It is your choice to use either an ordered or unordered set. In a few sentences, what are some of the tradeoffs between the two? Additionally, please give an example (that has not been shown in lecture) of a valid hash function that could be used to hash student names for an unordered set.
+A1. The main tradeoff between std::set and std::unordered_set lies in the balance between performance and ordering. 
+std::set, which is typically implemented as a red-black tree, guarantees that its elements are always sorted. 
+This is useful when ordered traversal is needed, but its operations (insertion, deletion, and lookup) have a time complexity of O(log N). 
+On the other hand, std::unordered_set is based on a hash table, offering an average time complexity of O(1) for its operations, which is generally much faster. 
+However, it does not maintain any specific order of elements and requires a suitable hash function for its key type.
+
+
+Q2. Note that we are saving pointers to names in the queue, not names themselves. Why might this be desired in this problem? What happens if the original set where the names are stored goes out of scope and the pointers are referenced?
+A2. Storing pointers to names in the queue instead of the names themselves is desirable for two main reasons: efficiency and maintaining a single source of truth. std::string objects can be large, and copying them can be an expensive operation in terms of both time and memory. By storing pointers, we only copy a small, fixed-size memory address (e.g., 8 bytes on a 64-bit system), which is significantly more efficient than duplicating the entire string data for each match. This also ensures that we are always referencing the original, single copy of the name stored in the students set, preventing data redundancy.
+If the original set where the names are stored goes out of scope, its destructor is called, and the memory holding all the std::string objects is deallocated. As a result, the pointers in the matches queue become dangling pointers. They point to memory locations that are no longer valid. Attempting to dereference these pointers (e.g., to read the name) will lead to undefined behavior (UB). This could manifest as a program crash (like a segmentation fault), or it could silently read garbage data, leading to unpredictable and difficult-to-debug errors.
